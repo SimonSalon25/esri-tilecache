@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "esri-tilecache"
+version = "0.1.0"
+description = "Open Esri tile caches (.tpk Compact V1/V2, .tpkx, .vtpk, cache folders) as GeoPackage and MBTiles without re-encoding tiles"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [
+  { name = "Šimon Saloň", email = "simon.salon@tuzvo.sk" },
+  { name = "Milan Koreň" },
+  { name = "František Chudý" },
+  { name = "Julián Tomaštík" },
+  { name = "Miroslav Kardoš" },
+]
+keywords = ["esri", "tile package", "tpk", "tpkx", "vtpk", "compact cache", "geopackage", "mbtiles", "lerc", "gis"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = ["numpy>=1.24", "pillow>=10"]
+
+[project.optional-dependencies]
+lerc = ["lerc>=4.0"]
+crs = ["pyproj>=3.5"]
+test = ["pytest>=8", "rasterio>=1.3", "pyogrio>=0.7", "pyproj>=3.5", "lerc>=4.0"]
+
+[project.urls]
+Homepage = "https://github.com/SimonSalon25/esri-tilecache"
+Issues = "https://github.com/SimonSalon25/esri-tilecache/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
