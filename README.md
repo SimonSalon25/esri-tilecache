@@ -1,5 +1,7 @@
 # esri-tilecache
 
+[![DOI](https://zenodo.org/badge/1468688538.svg)](https://doi.org/10.5281/zenodo.24477748)
+
 Convert Esri tile caches into open, standard formats — **without re-encoding a single tile**.
 
 | input | content | output |
