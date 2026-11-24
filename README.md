@@ -1,6 +1,7 @@
 # esri-tilecache
 
 [![DOI](https://zenodo.org/badge/1468688538.svg)](https://doi.org/10.5281/zenodo.24477748)
+[![tests](https://github.com/SimonSalon25/esri-tilecache/actions/workflows/tests.yml/badge.svg)](https://github.com/SimonSalon25/esri-tilecache/actions/workflows/tests.yml)
 
 Convert Esri tile caches into open, standard formats — **without re-encoding a single tile**.
 
@@ -18,14 +19,17 @@ Convert Esri tile caches into open, standard formats — **without re-encoding a
 a state agency as a single `.tpk` of several GB stored as **Compact Cache V1**. Open GIS software and mobile field
 apps cannot use it directly.
 
-**State as of 23 November 2026.** GDAL — and with it QGIS — reads `.tpkx` and Compact V2 caches, but **not the older
-Compact V1 `.tpk`**, still used by some national mapping agencies; the V1 layout is not documented by Esri. The
-alternatives were proprietary software or re-encoding the tiles with quality loss.
+**State as of 23 November 2026.** GDAL — and with it QGIS — reads `.tpkx` and Compact V2 caches with 256 px tiles
+(ESRIC driver), but **not the older Compact V1 `.tpk`**, still used by some national mapping agencies; Esri describes
+the V1 layout only conceptually. The open-source [tpkutils](https://github.com/consbio/tpkutils) (ISC) reads V1
+`.tpk`, but only in Web Mercator and only into MBTiles or loose tiles. A V1 cache in a national coordinate system
+(here S-JTSK [JTSK03], 512 px tiles) could therefore be opened only in proprietary software or after reprojecting
+and re-encoding the tiles.
 
 **Solution.** This package reads all of them, keeps every image tile byte for byte (no quality loss, conversion
 limited only by disk speed) and writes a GeoPackage that GDAL, QGIS and mobile apps open directly; LERC elevation
-caches become float32 coverages and vector tile packages MBTiles. The undocumented V1 layout is described in
-[METHODOLOGY.md](METHODOLOGY.md). The QGIS plugin [Esri Tile Cache Converter](https://github.com/SimonSalon25/qgis-plugins)
+caches become float32 coverages and vector tile packages MBTiles. The V1 byte layout as established and tested here is
+described in [METHODOLOGY.md](METHODOLOGY.md). The QGIS plugin [Esri Tile Cache Converter](https://github.com/SimonSalon25/qgis-plugins)
 offers the same conversion in QGIS.
 
 **Aim.** National maps distributed as Esri tile packages should be usable in open GIS software and offline on
@@ -43,8 +47,8 @@ Details:
 ## Install
 
 ```bash
-pip install esri-tilecache            # images
-pip install "esri-tilecache[lerc]"    # + LERC elevation caches
+pip install "esri-tilecache @ git+https://github.com/SimonSalon25/esri-tilecache"        # images (not on PyPI yet)
+pip install "esri-tilecache[lerc] @ git+https://github.com/SimonSalon25/esri-tilecache"  # + LERC elevation caches
 ```
 
 ## Use

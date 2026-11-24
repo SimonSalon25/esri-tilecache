@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "esri-tilecache: open Esri tile caches as GeoPackage and MBTiles without re-encoding"
-version: 0.1.0
-date-released: 2026-11-23
+version: 0.1.1
+date-released: 2026-11-24
 doi: 10.5281/zenodo.24477748
 license: MIT
 repository-code: "https://github.com/SimonSalon25/esri-tilecache"

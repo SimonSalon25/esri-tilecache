@@ -13,8 +13,9 @@ part of this repository; the tests use public Esri samples and synthetic caches.
 ## 2. Storage layouts
 
 Compact V2 and the tile package formats are documented by Esri (github.com/Esri/raster-tiles-compactcache,
-github.com/Esri/tile-package-spec, Apache 2.0). Compact V1 is not; its layout was established on the national
-cache and confirmed by the tests:
+github.com/Esri/tile-package-spec, Apache 2.0). For Compact V1 Esri gives only a conceptual description (a separate
+`.bundlx` index next to each `.bundle`), not the byte layout; its layout was established on the national cache and
+confirmed by the tests:
 
 | | V1 | V2 |
 |---|---|---|
@@ -33,6 +34,14 @@ national cache: `EOFError` at bundle 21 and garbled tiles); reading directly avo
 
 *Result on the national cache (user's PC, November 2026):* 329,907 tiles converted in 39 s (3.8 GB GeoPackage);
 overviews ×4…×1024 built in 12.5 min; the map opens in the application in 0.7 s.
+
+*Other open-source readers (checked 24 November 2026).* GDAL's ESRIC driver reads Compact V2 and `.tpkx` with
+256 px tiles and states that V1 `.tpk` is not supported. tpkutils (github.com/consbio/tpkutils, ISC, last release
+0.8.2 in 2022) reads V1 `.tpk` into MBTiles or loose tiles, but requires Web Mercator; according to its README it
+does not write GeoPackage and does not handle other coordinate systems or Compact V2. tpk2gpkg (github.com/cuulee/tpk2gpkg) converts `.tpkx` and
+`.vtpk`, not V1. What this package adds is therefore not the first V1 reader, but V1 (and V2) in any coordinate
+system and tile size, written as a GeoPackage that keeps the source tiles and levels unchanged, with LERC and
+overviews.
 
 ## 3. Tile matrix of the GeoPackage
 
