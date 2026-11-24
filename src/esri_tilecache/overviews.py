@@ -30,7 +30,12 @@ OVERVIEW_QUALITY = 82
 LOCK_TIMEOUT_S = 120
 JOURNAL_RESTORE_TIMEOUT_S = 60          # leaving WAL needs the file for itself
 SOURCE_LEVELS_TABLE = "esri_tilecache_source_levels"
-_LEGACY_SOURCE_LEVELS_TABLES = ("lj_povodne_urovne",)   # files written by the Lesná mapa applications
+# where the lowest source level is looked up: (table, literal statement); the last one is for files written by
+# the Lesná mapa applications
+_SOURCE_LEVEL_LOOKUPS = (
+    (SOURCE_LEVELS_TABLE, "SELECT zoom_from FROM esri_tilecache_source_levels WHERE table_name=?"),
+    ("lj_povodne_urovne", "SELECT zoom_od FROM lj_povodne_urovne WHERE table_name=?"),
+)
 
 
 def overview_factors(width: int, height: int, start: int = 4, smallest_px: int = 512) -> list[int]:
@@ -40,6 +45,11 @@ def overview_factors(width: int, height: int, start: int = 4, smallest_px: int =
         out.append(f)
         f *= 2
     return out
+
+
+def _q(table) -> str:
+    """A table name as a quoted SQL identifier: a double quote inside the name is doubled, so it cannot end the identifier."""
+    return '"' + str(table).replace('"', '""') + '"'
 
 
 def _ro(path):
@@ -65,10 +75,10 @@ def has_overviews(path, table: str) -> bool:
     con = _ro(path)
     try:
         zmin = con.execute("SELECT min(zoom_level) FROM gpkg_tile_matrix WHERE table_name=?", (table,)).fetchone()[0]
-        zb = con.execute(f'SELECT max(zoom_level) FROM "{table}"').fetchone()[0]
+        zb = con.execute(f"SELECT max(zoom_level) FROM {_q(table)}").fetchone()[0]  # nosec B608
         if zmin is None or zb is None or zmin >= zb:
             return True
-        return con.execute(f'SELECT 1 FROM "{table}" WHERE zoom_level=? LIMIT 1', (zmin,)).fetchone() is not None
+        return con.execute(f"SELECT 1 FROM {_q(table)} WHERE zoom_level=? LIMIT 1", (zmin,)).fetchone() is not None  # nosec B608
     finally:
         con.close()
 
@@ -88,13 +98,12 @@ def source_zoom(path, table) -> int:
     """
     con = _ro(path)
     try:
-        for name, column in ((SOURCE_LEVELS_TABLE, "zoom_from"),) + tuple(
-                (t, "zoom_od") for t in _LEGACY_SOURCE_LEVELS_TABLES):
+        for name, sql in _SOURCE_LEVEL_LOOKUPS:
             if con.execute("SELECT 1 FROM sqlite_master WHERE name=?", (name,)).fetchone():
-                r = con.execute(f"SELECT {column} FROM {name} WHERE table_name=?", (table,)).fetchone()
+                r = con.execute(sql, (table,)).fetchone()
                 if r is not None:
                     return r[0]
-        return con.execute(f'SELECT max(zoom_level) FROM "{table}"').fetchone()[0]
+        return con.execute(f"SELECT max(zoom_level) FROM {_q(table)}").fetchone()[0]  # nosec B608
     finally:
         con.close()
 
@@ -126,7 +135,7 @@ def _band(args):
     con = _ro(path)
     out = []
     try:
-        rows = con.execute(f'SELECT tile_column, tile_row, tile_data FROM "{table}" '
+        rows = con.execute(f"SELECT tile_column, tile_row, tile_data FROM {_q(table)} "  # nosec B608
                            "WHERE zoom_level=? AND tile_row>=? AND tile_row<?",
                            (z_source, r0 * factor, r1 * factor)).fetchall()
         targets: dict = {}
@@ -156,7 +165,7 @@ def _band_elevation(path, table, z_source, z_target, factor, r0, r1, t, data_nul
     con = _ro(path)
     out = []
     try:
-        rows = con.execute(f'SELECT tile_column, tile_row, tile_data FROM "{table}" '
+        rows = con.execute(f"SELECT tile_column, tile_row, tile_data FROM {_q(table)} "  # nosec B608
                            "WHERE zoom_level=? AND tile_row>=? AND tile_row<?",
                            (z_source, r0 * factor, r1 * factor)).fetchall()
     finally:
@@ -188,7 +197,7 @@ def delete_overviews(path, table: str, zoom_from: int | None = None) -> None:
     zoom_from = zoom_from if zoom_from is not None else source_zoom(path, table)
     con = _rw(path)
     try:
-        con.execute(f'DELETE FROM "{table}" WHERE zoom_level < ?', (zoom_from,))
+        con.execute(f"DELETE FROM {_q(table)} WHERE zoom_level < ?", (zoom_from,))  # nosec B608
         con.commit()
     finally:
         con.close()
@@ -221,7 +230,7 @@ def build_overviews(path, table: str | None = None, *, start: int | None = None,
     con.close()
     con = _ro(path)
     try:
-        zmax_data = con.execute(f'SELECT max(zoom_level) FROM "{table}"').fetchone()[0]
+        zmax_data = con.execute(f"SELECT max(zoom_level) FROM {_q(table)}").fetchone()[0]  # nosec B608
     finally:
         con.close()
     is_elev, null = _elevation(path, table)
